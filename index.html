@@ -70,18 +70,26 @@
     z-index: 1;
   }
 
+  /*
+    col-l (1.7fr): Tasks on top, Habits below
+    col-r (1fr):   Focus on top, Win Log below
+  */
   .sections-grid {
     display: grid;
     grid-template-columns: 1.7fr 1fr;
-    grid-template-rows: auto auto;
     gap: 16px;
     align-items: start;
   }
 
-  /* Tasks — tall left column spanning both rows */
+  .col-l, .col-r {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  /* Tasks prominent styling */
   #block-tasks {
-    grid-column: 1;
-    grid-row: 1 / 3;
     border: 1.5px solid rgba(21,88,192,0.3);
     box-shadow:
       0 4px 24px rgba(21,88,192,0.10),
@@ -93,42 +101,16 @@
     background: linear-gradient(135deg, rgba(21,88,192,0.07) 0%, rgba(0,151,167,0.04) 100%);
   }
 
-  #block-tasks .section-name {
-    font-size: 16px;
-  }
+  #block-tasks .section-name { font-size: 16px; }
 
   #block-tasks .section-icon {
     width: 36px; height: 36px; font-size: 17px;
     background: rgba(21,88,192,0.12);
   }
 
-  /* Focus — top right */
-  #block-focus {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  /* Habits — bottom right top */
-  #block-habits {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  /* Win Log — full width bottom row */
-  #block-wins {
-    grid-column: 1 / 3;
-    grid-row: 3;
-  }
-
   @media (max-width: 860px) {
-    .sections-grid {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto;
-    }
-    #block-tasks, #block-focus, #block-habits, #block-wins {
-      grid-column: 1;
-      grid-row: auto;
-    }
+    .sections-grid { grid-template-columns: 1fr; }
+    .col-l, .col-r { width: 100%; }
   }
 
   /* HEADER */
@@ -930,7 +912,7 @@
   </div>
 
   <!-- Quote -->
-  <div class="quote-card" onclick="newQuote()">
+  <div class="quote-card" id="quoteCard" onclick="newQuote()">
     <div class="quote-text" id="quoteText"></div>
     <div class="quote-footer">
       <div class="quote-author" id="quoteAuthor"></div>
@@ -939,6 +921,7 @@
   </div>
 
   <div class="sections-grid">
+  <div class="col-l">
   <!-- TASKS -->
   <div class="section-block" id="block-tasks">
     <div class="section-head" onclick="toggleBlock('tasks')">
@@ -988,6 +971,29 @@
     </div>
   </div>
 
+  <!-- HABITS -->
+  <div class="section-block" id="block-habits">
+    <div class="section-head" onclick="toggleBlock('habits')">
+      <div class="section-head-left">
+        <div class="section-icon">📆</div>
+        <div>
+          <div class="section-name">Habits</div>
+          <div class="section-meta" id="habitMeta">Weekly tracker</div>
+        </div>
+      </div>
+      <div class="section-chevron">▾</div>
+    </div>
+    <div class="section-body">
+      <div class="add-row">
+        <input class="add-input" id="habitInput" placeholder="New habit (e.g. Walk, Journal, Water...)" onkeydown="if(event.key==='Enter')addHabit()">
+        <button class="add-btn" onclick="addHabit()">Add</button>
+      </div>
+      <div class="habit-grid" id="habitGrid"></div>
+    </div>
+  </div>
+
+  </div><!-- /col-l -->
+  <div class="col-r">
   <!-- FOCUS -->
   <div class="section-block" id="block-focus">
     <div class="section-head" onclick="toggleBlock('focus')">
@@ -1028,27 +1034,6 @@
     </div>
   </div>
 
-  <!-- HABITS -->
-  <div class="section-block" id="block-habits">
-    <div class="section-head" onclick="toggleBlock('habits')">
-      <div class="section-head-left">
-        <div class="section-icon">📆</div>
-        <div>
-          <div class="section-name">Habits</div>
-          <div class="section-meta" id="habitMeta">Weekly tracker</div>
-        </div>
-      </div>
-      <div class="section-chevron">▾</div>
-    </div>
-    <div class="section-body">
-      <div class="add-row">
-        <input class="add-input" id="habitInput" placeholder="New habit (e.g. Walk, Journal, Water...)" onkeydown="if(event.key==='Enter')addHabit()">
-        <button class="add-btn" onclick="addHabit()">Add</button>
-      </div>
-      <div class="habit-grid" id="habitGrid"></div>
-    </div>
-  </div>
-
   <!-- WINS -->
   <div class="section-block" id="block-wins">
     <div class="section-head" onclick="toggleBlock('wins')">
@@ -1072,7 +1057,9 @@
       <div class="win-list" id="winList"></div>
     </div>
   </div>
+  </div><!-- /col-r -->
   </div><!-- /sections-grid -->
+
 
 </div>
 
@@ -1159,6 +1146,7 @@ function todayStr() { return new Date().toISOString().slice(0,10); }
 
 // QUOTES
 const quotes = [
+  // Stoics & philosophers
   { text: "You have power over your mind, not outside events. Realize this, and you will find strength.", author: "Marcus Aurelius" },
   { text: "The impediment to action advances action. What stands in the way becomes the way.", author: "Marcus Aurelius" },
   { text: "Waste no more time arguing about what a good man should be. Be one.", author: "Marcus Aurelius" },
@@ -1166,19 +1154,40 @@ const quotes = [
   { text: "Begin at once to live, and count each separate day as a separate life.", author: "Seneca" },
   { text: "It is not the man who has too little, but the man who craves more, that is poor.", author: "Seneca" },
   { text: "First say to yourself what you would be; and then do what you have to do.", author: "Epictetus" },
-  { text: "It is not death that a man should fear, but he should fear never beginning to live.", author: "Marcus Aurelius" },
-  { text: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
-  { text: "It is not that I'm so smart. But I stay with the questions much longer.", author: "Albert Einstein" },
-  { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
-  { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
-  { text: "Knowing is not enough; we must apply. Willing is not enough; we must do.", author: "Goethe" },
   { text: "He who has a why to live can bear almost any how.", author: "Friedrich Nietzsche" },
-  { text: "Concentrate all your thoughts upon the work at hand. The sun's rays do not burn until brought to a focus.", author: "Alexander Graham Bell" },
+  { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+  { text: "Knowing is not enough; we must apply. Willing is not enough; we must do.", author: "Goethe" },
+  // Presidents
+  { text: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
+  { text: "It is hard to fail, but it is worse never to have tried to succeed.", author: "Theodore Roosevelt" },
+  { text: "The only limit to our realization of tomorrow is our doubts of today.", author: "Franklin D. Roosevelt" },
+  { text: "In the middle of every difficulty lies opportunity.", author: "Abraham Lincoln" },
+  { text: "Give me six hours to chop down a tree and I will spend the first four sharpening the axe.", author: "Abraham Lincoln" },
+  { text: "Ask not what your country can do for you — ask what you can do for your country.", author: "John F. Kennedy" },
+  { text: "Change is the law of life. Those who look only to the past or present are certain to miss the future.", author: "John F. Kennedy" },
+  { text: "The secret of getting things done is to act.", author: "Dwight D. Eisenhower" },
+  { text: "If your actions inspire others to dream more, learn more, do more and become more, you are a leader.", author: "John Adams" },
+  // Authors & thinkers
+  { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+  { text: "Twenty years from now you will be more disappointed by the things you did not do than by the ones you did.", author: "Mark Twain" },
   { text: "Make the most of yourself, for that is all there is of you.", author: "Ralph Waldo Emerson" },
-  { text: "Small deeds done are better than great deeds planned.", author: "Peter Marshall" },
-  { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
+  { text: "Do not go where the path may lead; go instead where there is no path and leave a trail.", author: "Ralph Waldo Emerson" },
   { text: "You are never too old to set another goal or to dream a new dream.", author: "C.S. Lewis" },
+  { text: "It always seems impossible until it is done.", author: "Nelson Mandela" },
+  { text: "A person who never made a mistake never tried anything new.", author: "Albert Einstein" },
+  { text: "Imagination is more important than knowledge.", author: "Albert Einstein" },
   { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
+  // Humorous — Will Ferrell characters
+  { text: "I am in a glass case of emotion right now.", author: "Ron Burgundy, Anchorman", funny: true },
+  { text: "I feel like I am taking crazy pills!", author: "Mugatu, Zoolander", funny: true },
+  { text: "We are gonna get so many chicks with this van.", author: "Harry Carey, Saturday Night Live", funny: true },
+  { text: "I drive a Dodge Stratus!", author: "Craig, SNL — and that should be enough.", funny: true },
+  { text: "You're not even on my level. I am a golden god.", author: "Brennan Huff, Step Brothers", funny: true },
+  { text: "Did we just become best friends? YEP.", author: "Brennan Huff, Step Brothers", funny: true },
+  { text: "I wanna put it in a burlap sack and take it to the river.", author: "Ron Burgundy, on a rival news story", funny: true },
+  { text: "It's so damn hot. Milk was a bad choice.", author: "Ron Burgundy, Anchorman", funny: true },
+  { text: "I typed your symptoms into the thing up here and it says you could have network connectivity problems.", author: "Buddy the Elf, probably", funny: true },
 ];
 
 let lastQuoteIdx = -1;
@@ -1188,6 +1197,12 @@ function newQuote() {
   const q = quotes[idx];
   document.getElementById('quoteText').textContent = `"${q.text}"`;
   document.getElementById('quoteAuthor').textContent = `— ${q.author}`;
+  const card = document.getElementById('quoteCard');
+  if (q.funny) {
+    card.style.borderLeftColor = 'var(--amber)';
+  } else {
+    card.style.borderLeftColor = 'var(--cyan)';
+  }
 }
 
 // XP
