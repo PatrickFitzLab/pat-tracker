@@ -968,7 +968,7 @@
         </label>
         <input type="date" class="deadline-input" id="deadlineInput">
       </div>
-      <div class="sub-label">Pending</div>
+      <div class="sub-label">Active</div>
       <div class="task-list" id="todayList"></div>
       <div class="sub-label" style="margin-top:18px;">
         Completed
@@ -1294,9 +1294,9 @@ function clearDone() { state.tasks = state.tasks.filter(t=>!t.done); save(); ren
 function renderTasks() {
   const pending = state.tasks.filter(t=>!t.done);
   const done = state.tasks.filter(t=>t.done);
-  document.getElementById('todayList').innerHTML = pending.length ? pending.map(taskHTML).join('') : '<div class="empty">No pending tasks</div>';
+  document.getElementById('todayList').innerHTML = pending.length ? pending.map(taskHTML).join('') : '<div class="empty">No active tasks</div>';
   document.getElementById('doneList').innerHTML = done.length ? done.map(taskHTML).join('') : '<div class="empty">Completed tasks appear here</div>';
-  document.getElementById('taskMeta').textContent = `${pending.length} pending`;
+  document.getElementById('taskMeta').textContent = `${pending.length} active`;
   renderFocusTaskList();
   updateInspirationPanel();
 }
@@ -1916,8 +1916,8 @@ function prefillTask(text) {
 function updateInspirationPanel() {
   const pending = state.tasks.filter(t => !t.done);
   const panel = document.getElementById('taskInspiration');
-  // Show when 2 or fewer pending tasks
-  if (pending.length <= 2) {
+  // Show when fewer than 12 pending tasks
+  if (pending.length < 12) {
     panel.classList.add('visible');
     renderMotivation();
     renderInspirationChips();
